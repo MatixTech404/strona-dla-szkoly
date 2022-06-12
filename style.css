@@ -1,6 +1,9 @@
-code {
+code.short {
     background-color: #eee;
 }
 .code {
     background-color: #eee;
+}
+p.warning {
+    font-size: large;
 }

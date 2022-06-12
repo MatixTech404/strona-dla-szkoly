@@ -11,32 +11,61 @@
     <h1>O przechowywaniu haseł</h1>
     <p>Jeśli tworzysz stronę internetową, i chcesz dodać system logowania, musisz w jakiś sposób przechowywać hasła<br>
     poniżej przedstawię sposoby przechowywania ich, lecz najpierw, muszę omówić sposób porównywania haseł</p>
+    <br>
     <h2>Sprawdzanie poprawności haseł</h2>
-    <h3>Używanie operatora równości</h3>
-    <p>W pythonie (jak i w innnych językach programowania) jest dostępny operator równości (<code class="short">==</code>), który można użyć do sprawdzenia, jak pokazano poniżej</p>
+    <p>W pythonie (jak i w innnych językach programowania) jest dostępny operator równości (<code class="short">==</code>), który można użyć do sprawdzenia haseł,
+        jak pokazano poniżej</p>
     <pre class="code">
 <code>def porownaj_hasla(haslo1, haslo2):
     if haslo1 == haslo2:
         return True
     else:
-        return False</code>
-    </pre>
+        return False</code></pre>
     <p>Lecz ten sposób nie jest dobry. Dlaczego? Najpierw spójrzcie równoznaczny kod, w którym rozwinę, co robi operator <code>==</code></p>
-    <pre class="code">
-<code>def porownaj_hasla(haslo1, haslo2):
+    <pre class="code"><code>def porownaj_hasla(haslo1, haslo2):
     if len(haslo1) != len(haslo2):
         return False
     for i in range(len(haslo1)):
         if haslo1[i] != haslo2[i]:
             return False
-    return True</code>
-    </pre>
+    return True</code></pre>
     <p>krok po kroku, ten kod robi następujące rzeczy:</p>
     <ol>
         <li>Sprawdza długości haseł. Jeżeli są różne, zwraca fałsz.</li>
         <li>Sprawdza znak po znaku, jakiś się różni. Jeżeli tak, przestaje sprawdzać i zwraca fałsz.</li>
         <li>Jeżeli doszliśmy do tego punktu, hasła MUSZĄ być takie same, więc zwracamy prawdę.</li>
     </ol>
-    <p>Każda z operacji zajmuje czas. Im większą część hasła mamy poprawną, tym dłużej potrwa sprawdzanie. Więc potencjalny haker mógłby wykorzystać czas odpowiedzi do zdobycia informacji o haśle</p>
+    <p>Każda z operacji zajmuje czas. Im większą część hasła mamy poprawną, tym dłużej potrwa sprawdzanie.
+        Więc potencjalny haker mógłby wykorzystać czas odpowiedzi do zdobycia informacji o haśle, co nie jest przez nas pożądane.</p>
+    <p>Na szczęście da się zapobiec takiego typu atakom, korzystając z funkcji przeznaczonej do porównywania haseł.<br>
+    W pythonie jest to funkcja <code class="short">hmac.compare_digest()</code>, a przykład jej użycia jest pokazany poniżej</p>
+    <pre class="code">
+<code>from hmac import compare_digest
+
+def porownaj_hasla(haslo1, haslo2):
+    if compare_digest(haslo1, haslo2):
+        return True
+    else:
+        return False</code></pre>
+    <br>
+    <h2>Przechowywanie haseł w bazach danych</h2>
+    <p>Okej, więc omówiliśmy sprawdzanie haseł, ale co ich przechowywaniem? Możemy umieścić hasła w bazie danych tak, jak są.<br>
+    Lecz to jest najgorszy sposób. Dlaczego? Ponieważ, jeśli dojdzie do wycieku, to hakerzy dostaną łatwy dostęp do konta, jak również mogą spróbować zalogować się na inne komta użytkowników (bo powiedzmy sobie szczerze, kto ma kompletnie różne hasła do różnych kont)</p>
+    <p>Najlepszym obecnie sposobem jest użyć solenia i haszowania(nie wymyśliłem terminów, co najwyżej na siłę przetłumaczyłem). Poniżej jest przykład zapisywania hasła do bazy danych</p>
+    <pre class="code"><code>def store_password_in_db(user, passwd):
+    salt = secrets.get_bytes(20)
+    digest = hashlib.some_hash_func(passwd, salt, 1_000_000, 256)
+    record = f'{user}${salt}${digest}'</code></pre>
+    <p>a porównywanie zaimplementujemy następująco</p>
+    <pre class="code"><code>def compare_passwords(passwd, record):
+    _, salt, digest2 = record.split()
+    digest = hashlib.some_hash_func(passwd, salt, 1_000_000, 256)
+    if hmac.compare_digest(digest, digest2):
+        return True
+    else:
+        return False</code></pre>
+    <p>W tym przypadku, jedyne co by pozostało hakerowi do zrobienia, to odkryć hasło siłowo (robiąc losowe próby)</p>
+    <br>
+    <p class="warning"><b>UWAGA! W systemach z prawdziwego zdarzenia, nie implementuj kodu pokazanego tutaj.</b></p>
 </body>
 </html>
